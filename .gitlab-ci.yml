@@ -1,0 +1,28 @@
+variables:
+  CHECKMARX_SERVER_URL: "https://checkmarx.your-domain.com" # Replace with your Checkmarx server URL
+  CHECKMARX_USERNAME: "your_username"
+  CHECKMARX_PASSWORD: "your_password" # Consider using GitLab CI/CD secrets for security
+  CX_PROJECT_NAME: "${CI_PROJECT_PATH_SLUG}" # Dynamically set based on your project
+  CX_BRANCH_NAME: "${CI_COMMIT_REF_NAME}" # Branch name
+  CX_FLOW_BUG_TRACKER: "GitLab"
+  CHECKMARX_SCAN_PRESET: "Checkmarx Default" # Preset, can be customized
+
+stages:
+  - security_scan
+
+checkmarx_sast_scan:
+  stage: security_scan
+  image:
+    name: checkmarx/cxflow:latest # Replace with the latest Docker image for CxFlow
+    entrypoint: [""]
+  script:
+    - export CX_FLOW_TOKEN=$(curl -X POST -d "username=$CHECKMARX_USERNAME&password=$CHECKMARX_PASSWORD" "$CHECKMARX_SERVER_URL/auth/identity/connect/token" | jq -r '.access_token')
+    - cxflow
+      --scan
+      --app="${CI_PROJECT_NAME}"
+      --repo-url="${CI_REPOSITORY_URL}"
+      --branch="${CI_COMMIT_REF_NAME}"
+      --cx-team="your_team_path" # Replace with the appropriate Checkmarx team path
+      --cx-project="${CX_PROJECT_NAME}"
+      --namespace="${CI_PROJECT_NAMESPACE}"
+      --token="${CX_FLOW_TOKEN}"
